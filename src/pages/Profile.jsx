@@ -88,13 +88,11 @@ function Profile() {
 
   return (
     <>
-      <Helmet>
-        <title>Mi Perfil - BookFinder</title>
-        <meta
-          name="description"
-          content="Visualiza tus estadísticas de lectura y el progreso de tu biblioteca personal."
-        />
-      </Helmet>
+      <title>Mi Perfil - BookFinder</title>
+      <meta
+        name="description"
+        content="Visualiza tus estadísticas de lectura y el progreso de tu biblioteca personal."
+      />
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <Header onNewsletterOpen={() => setShowNewsletter(true)} />
 

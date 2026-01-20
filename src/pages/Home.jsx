@@ -197,13 +197,11 @@ function Home() {
 
   return (
     <>
-      <Helmet>
-        <title>Explorar Libros - BookFinder</title>
-        <meta
-          name="description"
-          content="Descubre tu próxima lectura favorita. Busca entre miles de libros y añádelos a tu biblioteca personal."
-        />
-      </Helmet>
+      <title>Explorar Libros - BookFinder</title>
+      <meta
+        name="description"
+        content="Descubre tu próxima lectura favorita. Busca entre miles de libros y añádelos a tu biblioteca personal."
+      />
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <Header onNewsletterOpen={() => setShowNewsletter(true)} />
 

@@ -129,13 +129,12 @@ function Favorites() {
 
   return (
     <>
-      <Helmet>
-        <title>Mis Favoritos - BookFinder</title>
-        <meta
-          name="description"
-          content="Tus libros favoritos en un solo lugar. Accede rápidamente a tus lecturas preferidas."
-        />
-      </Helmet>
+      <title>Mis Favoritos - BookFinder</title>
+      <meta
+        name="description"
+        content="Tus libros favoritos en un solo lugar. Accede rápidamente a tus lecturas preferidas."
+      />
+
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <Header onNewsletterOpen={() => setShowNewsletter(true)} />
 

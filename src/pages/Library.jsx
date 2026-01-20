@@ -171,13 +171,11 @@ function Library() {
 
   return (
     <>
-      <Helmet>
-        <title>Mi Biblioteca - BookFinder</title>
-        <meta
-          name="description"
-          content="Organiza tus libros por estado de lectura: quiero leer, leyendo y leídos."
-        />
-      </Helmet>
+      <title>Mi Biblioteca - BookFinder</title>
+      <meta
+        name="description"
+        content="Organiza tus libros por estado de lectura: quiero leer, leyendo y leídos."
+      />
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <Header onNewsletterOpen={() => setShowNewsletter(true)} />
 
