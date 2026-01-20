@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
 import { User, BookOpen, Heart, BarChart3, Mail, X } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
