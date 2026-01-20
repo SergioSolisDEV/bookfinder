@@ -8,6 +8,7 @@ import {
   AlertCircle,
   CheckCircle,
   User,
+  Loader2,
 } from "lucide-react";
 
 function Register() {
@@ -26,20 +27,27 @@ function Register() {
     setError("");
     setSuccess(false);
 
-    // Validaciones
-    if (!username.trim()) {
+    // Normalizar datos
+    const normalizedUsername = username.toLowerCase().trim();
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // ====================================
+    // VALIDACIONES BÁSICAS
+    // ====================================
+
+    if (!normalizedUsername) {
       setError("El nombre de usuario es obligatorio");
       setLoading(false);
       return;
     }
 
-    if (username.length < 3) {
+    if (normalizedUsername.length < 3) {
       setError("El nombre de usuario debe tener al menos 3 caracteres");
       setLoading(false);
       return;
     }
 
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    if (!/^[a-zA-Z0-9_]+$/.test(normalizedUsername)) {
       setError(
         "El nombre de usuario solo puede contener letras, números y guiones bajos",
       );
@@ -47,8 +55,8 @@ function Register() {
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
+    if (!normalizedEmail || !normalizedEmail.includes("@")) {
+      setError("Ingresa un email válido");
       setLoading(false);
       return;
     }
@@ -59,39 +67,120 @@ function Register() {
       return;
     }
 
-    try {
-      // Verificar si el username ya existe
-      const { data: existingUser } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("username", username.toLowerCase())
-        .single();
+    if (password !== confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      setLoading(false);
+      return;
+    }
 
-      if (existingUser) {
+    try {
+      // ====================================
+      // VERIFICAR EMAIL ÚNICO
+      // ====================================
+      const { data: existingEmail, error: emailCheckError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("email", normalizedEmail)
+        .maybeSingle(); // maybeSingle() no lanza error si no encuentra nada
+
+      if (emailCheckError && emailCheckError.code !== "PGRST116") {
+        // PGRST116 = No rows found (está bien)
+        throw emailCheckError;
+      }
+
+      if (existingEmail) {
+        setError("Este email ya está registrado");
+        setLoading(false);
+        return;
+      }
+
+      // ====================================
+      // VERIFICAR USERNAME ÚNICO
+      // ====================================
+      const { data: existingUsername, error: usernameCheckError } =
+        await supabase
+          .from("profiles")
+          .select("username")
+          .eq("username", normalizedUsername)
+          .maybeSingle();
+
+      if (usernameCheckError && usernameCheckError.code !== "PGRST116") {
+        throw usernameCheckError;
+      }
+
+      if (existingUsername) {
         setError("Este nombre de usuario ya está en uso");
         setLoading(false);
         return;
       }
 
-      // Registrar usuario
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      // ====================================
+      // REGISTRAR USUARIO EN SUPABASE AUTH
+      // ====================================
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: password,
         options: {
           data: {
-            username: username.toLowerCase(),
+            username: normalizedUsername,
           },
         },
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
+      if (!authData.user) {
+        throw new Error("No se pudo crear el usuario");
+      }
+
+      // ====================================
+      // CREAR PERFIL EN TABLA PROFILES
+      // ====================================
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          id: authData.user.id,
+          email: normalizedEmail,
+          username: normalizedUsername,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (profileError) {
+        console.error("Error creando perfil:", profileError);
+
+        // Si falla la creación del perfil, intentar eliminar el usuario de auth
+        // (aunque esto solo funcionaría con RLS apropiado o desde el servidor)
+
+        throw new Error("Error al crear el perfil de usuario");
+      }
+
+      // ====================================
+      // ÉXITO
+      // ====================================
       setSuccess(true);
+
       setTimeout(() => {
         navigate("/");
       }, 2000);
     } catch (error) {
-      setError(error.message);
+      console.error("Error en registro:", error);
+
+      // Manejo de errores específicos
+      if (error.message?.includes("User already registered")) {
+        setError("Este email ya está registrado");
+      } else if (error.message?.includes("duplicate key")) {
+        if (error.message.includes("email")) {
+          setError("Este email ya está registrado");
+        } else if (error.message.includes("username")) {
+          setError("Este nombre de usuario ya está en uso");
+        } else {
+          setError("Este usuario ya existe");
+        }
+      } else {
+        setError(
+          error.message || "Error al crear la cuenta. Intenta de nuevo.",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -115,22 +204,23 @@ function Register() {
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 animate-fadeIn">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
             <p className="text-red-700 text-sm">{error}</p>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2 animate-fadeIn">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
             <p className="text-green-700 text-sm">
-              ¡Cuenta creada! Redirigiendo...
+              ¡Cuenta creada exitosamente! Redirigiendo...
             </p>
           </div>
         )}
 
-        <div className="space-y-4">
+        <form onSubmit={handleRegister} className="space-y-4">
+          {/* USERNAME */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Nombre de Usuario
@@ -141,9 +231,11 @@ function Register() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase())}
-                placeholder="Nombre de usuario"
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                placeholder="usuario123"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition"
                 required
+                minLength={3}
+                disabled={loading}
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">
@@ -151,6 +243,7 @@ function Register() {
             </p>
           </div>
 
+          {/* EMAIL */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -162,12 +255,14 @@ function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
+          {/* PASSWORD */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Contraseña
@@ -179,12 +274,16 @@ function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition"
                 required
+                minLength={6}
+                disabled={loading}
               />
             </div>
+            <p className="text-xs text-gray-500 mt-1">Mínimo 6 caracteres</p>
           </div>
 
+          {/* CONFIRM PASSWORD */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Confirmar Contraseña
@@ -196,26 +295,39 @@ function Register() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition"
                 required
+                disabled={loading}
               />
             </div>
           </div>
 
+          {/* SUBMIT BUTTON */}
           <button
-            onClick={handleRegister}
+            type="submit"
             disabled={loading}
-            className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:bg-gray-400 font-semibold"
+            className={`w-full py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700 text-white"
+            }`}
           >
-            {loading ? "Creando cuenta..." : "Crear Cuenta"}
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Creando cuenta...
+              </>
+            ) : (
+              "Crear Cuenta"
+            )}
           </button>
-        </div>
+        </form>
 
         <p className="mt-6 text-center text-gray-600">
           ¿Ya tienes cuenta?{" "}
           <Link
             to="/login"
-            className="text-purple-600 hover:text-purple-700 font-semibold"
+            className="text-purple-600 hover:text-purple-700 font-semibold transition"
           >
             Inicia sesión
           </Link>
