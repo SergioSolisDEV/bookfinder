@@ -205,14 +205,6 @@ function Home() {
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <Header onNewsletterOpen={() => setShowNewsletter(true)} />
 
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="bg-gray-200 border-2 border-dashed border-gray-400 rounded-lg p-4 sm:p-8 text-center">
-            <p className="text-gray-600 text-sm sm:text-base">
-              AdSense Banner (Responsive)
-            </p>
-          </div>
-        </div>
-
         <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
