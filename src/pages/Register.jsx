@@ -114,6 +114,8 @@ function Register() {
       // ====================================
       // REGISTRAR USUARIO EN SUPABASE AUTH
       // ====================================
+      console.log("🔐 Intentando crear usuario en auth...");
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: password,
@@ -121,10 +123,16 @@ function Register() {
           data: {
             username: normalizedUsername,
           },
+          emailRedirectTo: window.location.origin,
         },
       });
 
+      console.log("✅ Auth data:", authData);
+      console.log("❌ Auth error:", authError);
+
       if (authError) {
+        console.error("Error en auth.signUp:", authError);
+
         // Manejar errores específicos de Auth
         if (authError.message.includes("User already registered")) {
           setError("Este email ya está registrado");
@@ -140,12 +148,15 @@ function Register() {
       }
 
       if (!authData.user) {
+        console.error("❌ No se creó el usuario en auth");
         throw new Error("No se pudo crear el usuario");
       }
 
+      console.log("✅ Usuario creado en auth con ID:", authData.user.id);
+
       // Verificar si el usuario ya existía (Supabase a veces retorna el usuario existente)
       if (authData.user && !authData.session) {
-        // Si no hay sesión pero sí usuario, probablemente ya existía
+        console.warn("⚠️ Usuario existe pero sin sesión");
         setError(
           "Este email ya está registrado. Revisa tu correo para confirmar tu cuenta.",
         );
