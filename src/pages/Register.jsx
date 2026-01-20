@@ -173,27 +173,30 @@ function Register() {
       console.log("✅ Sesión creada:", signInData.session ? "Sí" : "No");
 
       // ====================================
-      // CREAR PERFIL EN TABLA PROFILES
+      // ACTUALIZAR PERFIL (puede que ya exista por trigger)
       // ====================================
-      console.log("📝 Creando perfil en tabla profiles...");
+      console.log("📝 Actualizando perfil en tabla profiles...");
 
-      const { error: profileError } = await supabase.from("profiles").insert([
+      const { error: profileError } = await supabase.from("profiles").upsert(
         {
           id: authData.user.id,
           email: normalizedEmail,
           username: normalizedUsername,
-          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         },
-      ]);
+        {
+          onConflict: "id", // Si existe, actualizar
+        },
+      );
 
       console.log("❌ Profile error:", profileError);
 
       if (profileError) {
-        console.error("Error creando perfil:", profileError);
+        console.error("Error actualizando perfil:", profileError);
         throw new Error("Error al crear el perfil de usuario");
       }
 
-      console.log("✅ Perfil creado exitosamente");
+      console.log("✅ Perfil creado/actualizado exitosamente");
 
       // ====================================
       // ÉXITO
