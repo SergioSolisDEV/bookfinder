@@ -154,19 +154,11 @@ function Register() {
 
       console.log("✅ Usuario creado en auth con ID:", authData.user.id);
 
-      // Verificar si el usuario ya existía (Supabase a veces retorna el usuario existente)
-      if (authData.user && !authData.session) {
-        console.warn("⚠️ Usuario existe pero sin sesión");
-        setError(
-          "Este email ya está registrado. Revisa tu correo para confirmar tu cuenta.",
-        );
-        setLoading(false);
-        return;
-      }
-
       // ====================================
       // CREAR PERFIL EN TABLA PROFILES
       // ====================================
+      console.log("📝 Creando perfil en tabla profiles...");
+
       const { error: profileError } = await supabase.from("profiles").insert([
         {
           id: authData.user.id,
@@ -176,14 +168,14 @@ function Register() {
         },
       ]);
 
+      console.log("❌ Profile error:", profileError);
+
       if (profileError) {
         console.error("Error creando perfil:", profileError);
-
-        // Si falla la creación del perfil, intentar eliminar el usuario de auth
-        // (aunque esto solo funcionaría con RLS apropiado o desde el servidor)
-
         throw new Error("Error al crear el perfil de usuario");
       }
+
+      console.log("✅ Perfil creado exitosamente");
 
       // ====================================
       // ÉXITO
