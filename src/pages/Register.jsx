@@ -155,6 +155,24 @@ function Register() {
       console.log("✅ Usuario creado en auth con ID:", authData.user.id);
 
       // ====================================
+      // HACER LOGIN PARA OBTENER SESIÓN
+      // ====================================
+      console.log("🔐 Haciendo login para obtener sesión...");
+
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: password,
+        });
+
+      if (signInError) {
+        console.error("Error en signIn:", signInError);
+        throw signInError;
+      }
+
+      console.log("✅ Sesión creada:", signInData.session ? "Sí" : "No");
+
+      // ====================================
       // CREAR PERFIL EN TABLA PROFILES
       // ====================================
       console.log("📝 Creando perfil en tabla profiles...");
