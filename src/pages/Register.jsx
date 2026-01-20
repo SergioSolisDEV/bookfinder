@@ -75,37 +75,17 @@ function Register() {
 
     try {
       // ====================================
-      // VERIFICAR EMAIL ÚNICO
-      // Nota: Supabase Auth no devuelve error si el email existe,
-      // así que primero intentamos hacer signIn para verificar
+      // VERIFICAR EMAIL ÚNICO usando función SQL
       // ====================================
+      const { data: emailExists, error: emailCheckError } = await supabase.rpc(
+        "check_email_exists",
+        { check_email: normalizedEmail },
+      );
 
-      // Intentar login con email (sin contraseña válida)
-      // Si el email existe, auth dirá que la contraseña es incorrecta
-      // Si no existe, dirá que el usuario no existe
-      const { error: checkError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password: "invalid-password-check-123456", // Contraseña falsa
-      });
-
-      // Si el error es de credenciales inválidas, significa que el email SÍ existe
-      if (
-        checkError &&
-        checkError.message.includes("Invalid login credentials")
-      ) {
-        setError("Este email ya está registrado");
-        setLoading(false);
-        return;
-      }
-
-      // También verificar en profiles por si acaso
-      const { data: existingEmail } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("email", normalizedEmail)
-        .maybeSingle();
-
-      if (existingEmail) {
+      if (emailCheckError) {
+        console.error("Error verificando email:", emailCheckError);
+        // Si la función no existe, continuar sin verificación
+      } else if (emailExists) {
         setError("Este email ya está registrado");
         setLoading(false);
         return;
@@ -144,10 +124,33 @@ function Register() {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Manejar errores específicos de Auth
+        if (authError.message.includes("User already registered")) {
+          setError("Este email ya está registrado");
+          setLoading(false);
+          return;
+        }
+        if (authError.message.includes("already been registered")) {
+          setError("Este email ya está registrado");
+          setLoading(false);
+          return;
+        }
+        throw authError;
+      }
 
       if (!authData.user) {
         throw new Error("No se pudo crear el usuario");
+      }
+
+      // Verificar si el usuario ya existía (Supabase a veces retorna el usuario existente)
+      if (authData.user && !authData.session) {
+        // Si no hay sesión pero sí usuario, probablemente ya existía
+        setError(
+          "Este email ya está registrado. Revisa tu correo para confirmar tu cuenta.",
+        );
+        setLoading(false);
+        return;
       }
 
       // ====================================
