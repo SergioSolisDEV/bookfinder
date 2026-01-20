@@ -76,17 +76,34 @@ function Register() {
     try {
       // ====================================
       // VERIFICAR EMAIL ÚNICO
+      // Nota: Supabase Auth no devuelve error si el email existe,
+      // así que primero intentamos hacer signIn para verificar
       // ====================================
-      const { data: existingEmail, error: emailCheckError } = await supabase
+
+      // Intentar login con email (sin contraseña válida)
+      // Si el email existe, auth dirá que la contraseña es incorrecta
+      // Si no existe, dirá que el usuario no existe
+      const { error: checkError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: "invalid-password-check-123456", // Contraseña falsa
+      });
+
+      // Si el error es de credenciales inválidas, significa que el email SÍ existe
+      if (
+        checkError &&
+        checkError.message.includes("Invalid login credentials")
+      ) {
+        setError("Este email ya está registrado");
+        setLoading(false);
+        return;
+      }
+
+      // También verificar en profiles por si acaso
+      const { data: existingEmail } = await supabase
         .from("profiles")
         .select("email")
         .eq("email", normalizedEmail)
-        .maybeSingle(); // maybeSingle() no lanza error si no encuentra nada
-
-      if (emailCheckError && emailCheckError.code !== "PGRST116") {
-        // PGRST116 = No rows found (está bien)
-        throw emailCheckError;
-      }
+        .maybeSingle();
 
       if (existingEmail) {
         setError("Este email ya está registrado");
