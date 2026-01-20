@@ -114,7 +114,7 @@ function Register() {
       // ====================================
       // REGISTRAR USUARIO EN SUPABASE AUTH
       // ====================================
-      console.log("🔐 Intentando crear usuario en auth...");
+      // console.log("🔐 Intentando crear usuario en auth...");
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -127,8 +127,8 @@ function Register() {
         },
       });
 
-      console.log("✅ Auth data:", authData);
-      console.log("❌ Auth error:", authError);
+      // console.log("✅ Auth data:", authData);
+      // console.log("❌ Auth error:", authError);
 
       if (authError) {
         console.error("Error en auth.signUp:", authError);
@@ -152,12 +152,12 @@ function Register() {
         throw new Error("No se pudo crear el usuario");
       }
 
-      console.log("✅ Usuario creado en auth con ID:", authData.user.id);
+      // console.log("✅ Usuario creado en auth con ID:", authData.user.id);
 
       // ====================================
       // HACER LOGIN PARA OBTENER SESIÓN
       // ====================================
-      console.log("🔐 Haciendo login para obtener sesión...");
+      // console.log("🔐 Haciendo login para obtener sesión...");
 
       const { data: signInData, error: signInError } =
         await supabase.auth.signInWithPassword({
@@ -170,12 +170,12 @@ function Register() {
         throw signInError;
       }
 
-      console.log("✅ Sesión creada:", signInData.session ? "Sí" : "No");
+      // console.log("✅ Sesión creada:", signInData.session ? "Sí" : "No");
 
       // ====================================
       // ACTUALIZAR PERFIL (puede que ya exista por trigger)
       // ====================================
-      console.log("📝 Actualizando perfil en tabla profiles...");
+      // console.log("📝 Actualizando perfil en tabla profiles...");
 
       const { error: profileError } = await supabase.from("profiles").upsert(
         {
@@ -189,14 +189,14 @@ function Register() {
         },
       );
 
-      console.log("❌ Profile error:", profileError);
+      // console.log("❌ Profile error:", profileError);
 
       if (profileError) {
         console.error("Error actualizando perfil:", profileError);
         throw new Error("Error al crear el perfil de usuario");
       }
 
-      console.log("✅ Perfil creado/actualizado exitosamente");
+      // console.log("✅ Perfil creado/actualizado exitosamente");
 
       // ====================================
       // ÉXITO
