@@ -1,6 +1,27 @@
+# robots.txt para BookFinder
+
+# Permitir a todos los bots acceder al sitio
 User-agent: *
 Allow: /
-Disallow: /login
-Disallow: /register
 
-Sitemap: https://bookfinder.com/sitemap.xml
+# Bloquear rutas de autenticación sensibles (opcional)
+# Descomenta si quieres que Google NO indexe login/register
+# Disallow: /login
+# Disallow: /register
+
+# Bloquear archivos y carpetas innecesarias
+Disallow: /api/
+Disallow: /*.json$
+
+# Sitemap
+Sitemap: https://bookfinder.vercel.app/sitemap.xml
+
+# Rastreo más rápido para Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Configuración para Bing
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1

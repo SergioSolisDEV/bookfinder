@@ -9,11 +9,14 @@ import {
   User,
   AlertCircle,
   BookOpen,
+  LogIn,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BookCard from "../components/BookCard";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
+import { useSEO } from "../hooks/useSeo";
 import {
   getFavorites,
   addFavorite,
@@ -22,16 +25,17 @@ import {
   addToLibrary,
   removeFromLibrary,
 } from "../lib/database";
-import AdSenseBanner from "../components/AdSenseBanner";
 
 function Home() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [email, setEmail] = useState("");
   const [showNewsletter, setShowNewsletter] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false); // ← NUEVO: Modal de login
   const [error, setError] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [library, setLibrary] = useState({
@@ -39,9 +43,19 @@ function Home() {
     reading: [],
     read: [],
   });
-  const [dataLoading, setDataLoading] = useState(true);
 
-  // Cargar datos al montar el componente
+  // ✅ SEO dinámico
+  useSEO({
+    title: "Explorar Libros - BookFinder | Descubre tu próxima lectura",
+    description:
+      "Descubre miles de libros en español. Busca por género, autor o tema. Organiza tu biblioteca personal y encuentra tu próxima lectura favorita.",
+    keywords:
+      "libros, buscar libros, recomendaciones de libros, libros en español, biblioteca personal, lectura, BookFinder",
+    ogImage: "https://bookfinder.vercel.app/og-image.jpg", // Crear esta imagen después
+    canonicalUrl: "https://bookfinder.vercel.app/",
+  });
+
+  // ✅ Cargar datos SOLO si hay usuario autenticado
   useEffect(() => {
     if (user) {
       loadUserData();
@@ -58,8 +72,6 @@ function Home() {
       setLibrary(lib);
     } catch (error) {
       console.error("Error loading user data:", error);
-    } finally {
-      setDataLoading(false);
     }
   };
 
@@ -84,6 +96,7 @@ function Home() {
     return words.join(" ");
   };
 
+  // ✅ Búsqueda pública (sin login)
   const searchBooks = async () => {
     if (!searchQuery.trim()) return;
 
@@ -104,7 +117,7 @@ function Home() {
 
       if (data.items && data.items.length > 0) {
         setBooks(data.items);
-        if (!showNewsletter) {
+        if (!showNewsletter && !user) {
           setTimeout(() => setShowNewsletter(true), 3000);
         }
       } else {
@@ -137,7 +150,13 @@ function Home() {
     return `https://www.amazon.es/s?k=${searchTerm}&tag=YOUR-AFFILIATE-ID`;
   };
 
+  // 🔒 Verificar autenticación antes de agregar a favoritos
   const toggleFavorite = async (book) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     const isFav = favorites.some((fav) => fav.id === book.id);
 
     try {
@@ -155,15 +174,21 @@ function Home() {
   };
 
   const isFavorite = (book) => {
+    if (!user) return false;
     return favorites.some((fav) => fav.id === book.id);
   };
 
+  // 🔒 Verificar autenticación antes de agregar a biblioteca
   const addToLibraryShelf = async (book, shelf) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     const currentShelf = getBookShelf(book);
 
     try {
       if (currentShelf === shelf) {
-        // Eliminar de la biblioteca
         await removeFromLibrary(user.id, book.id);
         const newLibrary = {
           wantToRead: library.wantToRead.filter((b) => b.id !== book.id),
@@ -172,7 +197,6 @@ function Home() {
         };
         setLibrary(newLibrary);
       } else {
-        // Mover a nuevo estante
         await addToLibrary(user.id, book, shelf);
         const newLibrary = {
           wantToRead: library.wantToRead.filter((b) => b.id !== book.id),
@@ -189,6 +213,7 @@ function Home() {
   };
 
   const getBookShelf = (book) => {
+    if (!user) return null;
     if (library.wantToRead.some((b) => b.id === book.id)) return "wantToRead";
     if (library.reading.some((b) => b.id === book.id)) return "reading";
     if (library.read.some((b) => b.id === book.id)) return "read";
@@ -197,15 +222,11 @@ function Home() {
 
   return (
     <>
-      <title>Explorar Libros - BookFinder</title>
-      <meta
-        name="description"
-        content="Descubre tu próxima lectura favorita. Busca entre miles de libros y añádelos a tu biblioteca personal."
-      />
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 to-blue-50">
         <Header onNewsletterOpen={() => setShowNewsletter(true)} />
 
-        <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+        <main className="flex-1 max-w-6xl mx-auto px-4 py-6 sm:py-8 w-full">
+          {/* Sección de búsqueda */}
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 mb-8">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">
               ¿Qué libro estás buscando?
@@ -241,6 +262,7 @@ function Home() {
             )}
           </div>
 
+          {/* Resultados */}
           {books.length > 0 && (
             <>
               <div className="mb-4">
@@ -259,6 +281,8 @@ function Home() {
                   />
                 ))}
               </div>
+
+              {/* AdSense placeholder */}
               <div className="bg-gray-200 border-2 border-dashed border-gray-400 rounded-lg p-4 sm:p-8 text-center mb-8">
                 <p className="text-gray-600 text-sm sm:text-base">
                   AdSense Banner (Responsive)
@@ -268,13 +292,14 @@ function Home() {
           )}
         </main>
 
+        {/* Modal de detalles del libro */}
         {selectedBook && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 transition-all duration-300 animate-fadeIn"
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
             onClick={() => setSelectedBook(null)}
           >
             <div
-              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-scaleIn"
+              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 sm:p-6">
@@ -284,7 +309,7 @@ function Home() {
                   </h2>
                   <button
                     onClick={() => setSelectedBook(null)}
-                    className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+                    className="text-gray-500 hover:text-gray-700"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -313,18 +338,18 @@ function Home() {
 
                   <div className="md:col-span-2">
                     <div className="space-y-3 sm:space-y-4">
-                      <div className="flex items-center gap-2 text-gray-700 text-sm sm:text-base">
-                        <User className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <User className="w-5 h-5" />
                         <span className="font-semibold">Autor:</span>
-                        <span className="truncate">
+                        <span>
                           {selectedBook.volumeInfo.authors?.join(", ") ||
                             "Desconocido"}
                         </span>
                       </div>
 
                       {selectedBook.volumeInfo.pageCount && (
-                        <div className="flex items-center gap-2 text-gray-700 text-sm sm:text-base">
-                          <Clock className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                        <div className="flex items-center gap-2 text-gray-700">
+                          <Clock className="w-5 h-5" />
                           <span className="font-semibold">Páginas:</span>
                           <span>
                             {selectedBook.volumeInfo.pageCount} (~
@@ -336,22 +361,11 @@ function Home() {
                         </div>
                       )}
 
-                      {selectedBook.saleInfo?.listPrice && (
-                        <div className="flex items-center gap-2 text-gray-700 text-sm sm:text-base">
-                          <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                          <span className="font-semibold">Precio:</span>
-                          <span>
-                            {selectedBook.saleInfo.listPrice.amount}{" "}
-                            {selectedBook.saleInfo.listPrice.currencyCode}
-                          </span>
-                        </div>
-                      )}
-
                       <div>
-                        <h3 className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">
+                        <h3 className="font-semibold text-gray-700 mb-2">
                           Sinopsis:
                         </h3>
-                        <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                        <p className="text-gray-600 text-sm leading-relaxed">
                           {selectedBook.volumeInfo.description ||
                             "No hay sinopsis disponible."}
                         </p>
@@ -359,7 +373,7 @@ function Home() {
 
                       {selectedBook.volumeInfo.categories && (
                         <div>
-                          <h3 className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">
+                          <h3 className="font-semibold text-gray-700 mb-2">
                             Categorías:
                           </h3>
                           <div className="flex flex-wrap gap-2">
@@ -367,7 +381,7 @@ function Home() {
                               (cat, idx) => (
                                 <span
                                   key={idx}
-                                  className="px-2 sm:px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs sm:text-sm"
+                                  className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
                                 >
                                   {cat}
                                 </span>
@@ -377,16 +391,25 @@ function Home() {
                         </div>
                       )}
 
+                      {/* 🔒 Sección de biblioteca - requiere login */}
                       <div>
-                        <h3 className="font-semibold text-gray-700 mb-2 text-sm sm:text-base">
+                        <h3 className="font-semibold text-gray-700 mb-2">
                           Añadir a mi biblioteca:
                         </h3>
+                        {!user && (
+                          <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p className="text-blue-800 text-sm flex items-center gap-2">
+                              <LogIn className="w-4 h-4" />
+                              Inicia sesión para guardar libros en tu biblioteca
+                            </p>
+                          </div>
+                        )}
                         <div className="grid grid-cols-3 gap-2">
                           <button
                             onClick={() =>
                               addToLibraryShelf(selectedBook, "wantToRead")
                             }
-                            className={`px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                               getBookShelf(selectedBook) === "wantToRead"
                                 ? "bg-blue-600 text-white"
                                 : "bg-blue-50 text-blue-700 hover:bg-blue-100"
@@ -398,7 +421,7 @@ function Home() {
                             onClick={() =>
                               addToLibraryShelf(selectedBook, "reading")
                             }
-                            className={`px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                               getBookShelf(selectedBook) === "reading"
                                 ? "bg-orange-600 text-white"
                                 : "bg-orange-50 text-orange-700 hover:bg-orange-100"
@@ -410,7 +433,7 @@ function Home() {
                             onClick={() =>
                               addToLibraryShelf(selectedBook, "read")
                             }
-                            className={`px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                               getBookShelf(selectedBook) === "read"
                                 ? "bg-green-600 text-white"
                                 : "bg-green-50 text-green-700 hover:bg-green-100"
@@ -428,9 +451,9 @@ function Home() {
                         )}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full px-4 sm:px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition font-semibold text-sm sm:text-base"
+                        className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition font-semibold"
                       >
-                        <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <ExternalLink className="w-5 h-5" />
                         Comprar en Amazon
                       </a>
                       <p className="text-xs text-gray-500 text-center">
@@ -445,19 +468,66 @@ function Home() {
           </div>
         )}
 
+        {/* 🔒 Modal de autenticación */}
+        {showAuthModal && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowAuthModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl max-w-md w-full p-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center">
+                <div className="mx-auto w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                  <LogIn className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  Inicia sesión
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Para guardar libros en tu biblioteca y favoritos, necesitas
+                  tener una cuenta.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold"
+                  >
+                    Iniciar Sesión
+                  </button>
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="w-full px-6 py-3 bg-white text-purple-600 border-2 border-purple-600 rounded-lg hover:bg-purple-50 transition font-semibold"
+                  >
+                    Crear Cuenta
+                  </button>
+                  <button
+                    onClick={() => setShowAuthModal(false)}
+                    className="w-full px-6 py-3 text-gray-600 hover:text-gray-800 transition"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Newsletter modal */}
         {showNewsletter && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
             onClick={() => setShowNewsletter(false)}
           >
             <div
-              className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8"
+              className="bg-white rounded-2xl max-w-md w-full p-8"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
-                  <h3 className="text-xl sm:text-2xl font-bold">Newsletter</h3>
+                  <Mail className="w-8 h-8 text-purple-600" />
+                  <h3 className="text-2xl font-bold">Newsletter</h3>
                 </div>
                 <button
                   onClick={() => setShowNewsletter(false)}
@@ -466,7 +536,7 @@ function Home() {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <p className="text-sm sm:text-base text-gray-600 mb-6">
+              <p className="text-gray-600 mb-6">
                 Recibe recomendaciones personalizadas de libros cada semana
               </p>
               <input
@@ -475,11 +545,11 @@ function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleSubscribe()}
                 placeholder="tu@email.com"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none mb-4 text-sm sm:text-base"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none mb-4"
               />
               <button
                 onClick={handleSubscribe}
-                className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold text-sm sm:text-base"
+                className="w-full px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold"
               >
                 Suscribirme
               </button>

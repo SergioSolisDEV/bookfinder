@@ -12,16 +12,11 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* ✅ RUTAS PÚBLICAS (sin ProtectedRoute) */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<Home />} /> {/* ← AHORA PÚBLICO */}
+        {/* 🔒 RUTAS PROTEGIDAS (requieren login) */}
         <Route
           path="/library"
           element={
