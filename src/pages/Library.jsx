@@ -26,8 +26,6 @@ import {
 
 import { useSEO } from "../hooks/useSeo";
 
-import { useSEO } from "../hooks/useSeo";
-
 useSEO({
   title: "Mi Biblioteca - BookFinder",
   description: "Organiza tus libros por estado de lectura",
