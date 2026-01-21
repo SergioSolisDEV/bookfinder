@@ -21,6 +21,8 @@ import {
   removeFromLibrary,
 } from "../lib/database";
 
+import { useSEO } from "../hooks/useSeo";
+
 useSEO({
   title: "Mis Favoritos - BookFinder",
   description: "Tus libros favoritos guardados",
