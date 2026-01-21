@@ -4,6 +4,28 @@ import { Link } from "react-router-dom";
 import { Calendar, Clock, Eye, User } from "lucide-react";
 import { formatDate, calculateReadingTime } from "../lib/blog";
 
+import { useEffect } from "react";
+import { supabase } from "./lib/supabase";
+
+const ArticlePage = ({ slug }) => {
+  useEffect(() => {
+    // Incrementar vista cuando se carga el artículo
+    const incrementView = async () => {
+      try {
+        await supabase.rpc("increment_article_views", {
+          article_slug: slug,
+        });
+      } catch (error) {
+        console.error("Error incrementing view:", error);
+      }
+    };
+
+    incrementView();
+  }, [slug]);
+
+  // ... resto del componente
+};
+
 const ArticleCard = ({ article }) => {
   const readingTime = calculateReadingTime(article.content);
 
