@@ -24,6 +24,16 @@ import {
   removeFromLibrary,
 } from "../lib/database";
 
+import { useSEO } from "../hooks/useSeo";
+
+import { useSEO } from "../hooks/useSeo";
+
+useSEO({
+  title: "Mi Biblioteca - BookFinder",
+  description: "Organiza tus libros por estado de lectura",
+  canonicalUrl: "https://bookfinder.vercel.app/library",
+});
+
 function Library() {
   const { user } = useAuth();
   const [library, setLibrary] = useState({
