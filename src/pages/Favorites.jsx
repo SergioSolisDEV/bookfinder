@@ -21,14 +21,6 @@ import {
   removeFromLibrary,
 } from "../lib/database";
 
-import { useSEO } from "../hooks/useSeo";
-
-useSEO({
-  title: "Mis Favoritos - BookFinder",
-  description: "Tus libros favoritos guardados",
-  canonicalUrl: "https://bookfinder.vercel.app/favorites",
-});
-
 function Favorites() {
   const { user } = useAuth();
   const [favorites, setFavorites] = useState([]);
