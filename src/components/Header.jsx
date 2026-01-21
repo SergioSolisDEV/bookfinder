@@ -26,7 +26,10 @@ function Header({ onNewsletterOpen }) {
   };
 
   // ✅ Navegación pública (siempre visible)
-  const publicNavItems = [{ path: "/", icon: BookOpen, label: "Explorar" }];
+  const publicNavItems = [
+    { path: "/", icon: BookOpen, label: "Explorar" },
+    { path: "/blog", icon: BookOpen, label: "Blog" }, // ← NUEVO
+  ];
 
   // 🔒 Navegación privada (solo si está logueado)
   const privateNavItems = [
