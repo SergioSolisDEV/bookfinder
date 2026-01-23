@@ -55,12 +55,21 @@ function BlogPost() {
     setLoading(false);
   };
 
+  // Convertir tags de string a array
+  const tagsArray = article?.tags
+    ? article.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : [];
+
   // SEO dinámico
   useSEO({
     title: article ? `${article.title} - Blog BookFinder` : "Cargando...",
-    description: article?.excerpt || article?.content?.substring(0, 160),
-    keywords: article?.tags?.join(", "),
-    ogImage: article?.cover_image,
+    description:
+      article?.meta_description || article?.content?.substring(0, 160),
+    keywords: tagsArray.join(", "), // CORREGIDO: usar tagsArray
+    ogImage: article?.featured_image, // CORREGIDO: cover_image -> featured_image
     canonicalUrl: `https://bookfinder.vercel.app/blog/${slug}`,
   });
 
@@ -69,7 +78,7 @@ function BlogPost() {
       try {
         await navigator.share({
           title: article.title,
-          text: article.excerpt,
+          text: article.meta_description,
           url: window.location.href,
         });
       } catch (err) {
@@ -121,10 +130,10 @@ function BlogPost() {
           {/* Artículo */}
           <article className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Imagen de portada */}
-            {article.cover_image && (
+            {article.featured_image && (
               <div className="h-96 overflow-hidden">
                 <img
-                  src={article.cover_image}
+                  src={article.featured_image}
                   alt={article.title}
                   className="w-full h-full object-cover"
                 />
@@ -145,10 +154,10 @@ function BlogPost() {
                 {article.title}
               </h1>
 
-              {/* Excerpt */}
-              {article.excerpt && (
+              {/* Meta Description */}
+              {article.meta_description && (
                 <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                  {article.excerpt}
+                  {article.meta_description}
                 </p>
               )}
 
@@ -159,7 +168,7 @@ function BlogPost() {
                   <div className="flex items-center gap-2 text-gray-700">
                     <User className="w-5 h-5" />
                     <span className="font-medium">
-                      {article.author.username}
+                      {article.author.username || article.author.email}
                     </span>
                   </div>
                 )}
@@ -203,13 +212,13 @@ function BlogPost() {
               </div>
 
               {/* Tags */}
-              {article.tags && article.tags.length > 0 && (
+              {tagsArray.length > 0 && (
                 <div className="mt-8 pt-8 border-t border-gray-200">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">
                     Etiquetas:
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {article.tags.map((tag, index) => (
+                    {tagsArray.map((tag, index) => (
                       <span
                         key={index}
                         className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
