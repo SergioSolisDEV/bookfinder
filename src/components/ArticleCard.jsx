@@ -4,30 +4,16 @@ import { Link } from "react-router-dom";
 import { Calendar, Clock, Eye, User } from "lucide-react";
 import { formatDate, calculateReadingTime } from "../lib/blog";
 
-import { useEffect } from "react";
-import { supabase } from "../lib/supabase";
-
-const ArticlePage = ({ slug }) => {
-  useEffect(() => {
-    // Incrementar vista cuando se carga el artículo
-    const incrementView = async () => {
-      try {
-        await supabase.rpc("increment_article_views", {
-          article_slug: slug,
-        });
-      } catch (error) {
-        console.error("Error incrementing view:", error);
-      }
-    };
-
-    incrementView();
-  }, [slug]);
-
-  // ... resto del componente
-};
-
 const ArticleCard = ({ article }) => {
   const readingTime = calculateReadingTime(article.content);
+
+  // Convertir tags de string a array
+  const tagsArray = article.tags
+    ? article.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : [];
 
   return (
     <Link
@@ -35,10 +21,10 @@ const ArticleCard = ({ article }) => {
       className="block bg-white rounded-xl shadow-md hover:shadow-xl transition overflow-hidden group"
     >
       {/* Imagen de portada */}
-      {article.cover_image ? (
+      {article.featured_image ? (
         <div className="h-48 overflow-hidden">
           <img
-            src={article.cover_image}
+            src={article.featured_image}
             alt={article.title}
             className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
             loading="lazy"
@@ -66,10 +52,10 @@ const ArticleCard = ({ article }) => {
           {article.title}
         </h3>
 
-        {/* Excerpt */}
-        {article.excerpt && (
+        {/* Excerpt / Meta Description */}
+        {article.meta_description && (
           <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-            {article.excerpt}
+            {article.meta_description}
           </p>
         )}
 
@@ -79,7 +65,7 @@ const ArticleCard = ({ article }) => {
           {article.author && (
             <div className="flex items-center gap-1">
               <User className="w-4 h-4" />
-              <span>{article.author.username}</span>
+              <span>{article.author.username || article.author.email}</span>
             </div>
           )}
 
@@ -105,9 +91,9 @@ const ArticleCard = ({ article }) => {
         </div>
 
         {/* Tags */}
-        {article.tags && article.tags.length > 0 && (
+        {tagsArray.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
-            {article.tags.slice(0, 3).map((tag, index) => (
+            {tagsArray.slice(0, 3).map((tag, index) => (
               <span
                 key={index}
                 className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded"
