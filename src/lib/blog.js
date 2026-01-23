@@ -14,7 +14,7 @@ export const getPublishedArticles = async () => {
         author:profiles(username, email)
       `,
       )
-      .eq("published", true)
+      .eq("status", "published")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -39,7 +39,7 @@ export const getArticleBySlug = async (slug) => {
       `,
       )
       .eq("slug", slug)
-      .eq("published", true)
+      .eq("status", "published")
       .single();
 
     if (error) throw error;
@@ -61,21 +61,20 @@ export const getArticleBySlug = async (slug) => {
  */
 export const incrementArticleViews = async (articleId) => {
   try {
-    const { error } = await supabase.rpc("increment_article_views", {
-      article_id: articleId,
-    });
+    const { data: article } = await supabase
+      .from("articles")
+      .select("views")
+      .eq("id", articleId)
+      .single();
 
-    if (error) throw error;
-  } catch (error) {
-    // Si la función no existe, usar UPDATE directo
-    try {
+    if (article) {
       await supabase
         .from("articles")
-        .update({ views: supabase.raw("views + 1") })
+        .update({ views: (article.views || 0) + 1 })
         .eq("id", articleId);
-    } catch (err) {
-      console.error("Error incrementing views:", err);
     }
+  } catch (error) {
+    console.error("Error incrementing views:", error);
   }
 };
 
@@ -92,9 +91,9 @@ export const searchArticles = async (query) => {
         author:profiles(username, email)
       `,
       )
-      .eq("published", true)
+      .eq("status", "published")
       .or(
-        `title.ilike.%${query}%,excerpt.ilike.%${query}%,content.ilike.%${query}%`,
+        `title.ilike.%${query}%,meta_description.ilike.%${query}%,content.ilike.%${query}%,category.ilike.%${query}%`,
       )
       .order("created_at", { ascending: false });
 
@@ -119,7 +118,7 @@ export const getArticlesByCategory = async (category) => {
         author:profiles(username, email)
       `,
       )
-      .eq("published", true)
+      .eq("status", "published")
       .eq("category", category)
       .order("created_at", { ascending: false });
 
@@ -148,7 +147,7 @@ export const getRelatedArticles = async (
         author:profiles(username, email)
       `,
       )
-      .eq("published", true)
+      .eq("status", "published")
       .eq("category", category)
       .neq("id", currentArticleId)
       .order("created_at", { ascending: false })
