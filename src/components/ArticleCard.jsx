@@ -5,7 +5,7 @@ import { Calendar, Clock, Eye, User } from "lucide-react";
 import { formatDate, calculateReadingTime } from "../lib/blog";
 
 import { useEffect } from "react";
-import { supabase } from "./lib/supabase";
+import { supabase } from "../lib/supabase";
 
 const ArticlePage = ({ slug }) => {
   useEffect(() => {
