@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Evitar desbordamiento de texto en artículos */
+.prose {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.prose * {
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.prose a {
+  word-break: break-all;
+}
+
+.prose pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.prose code {
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.prose img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+}
+
+/* Evitar que URLs largas rompan el diseño */
+.prose p,
+.prose li,
+.prose td {
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}

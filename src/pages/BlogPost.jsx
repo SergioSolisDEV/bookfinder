@@ -221,12 +221,12 @@ function BlogPost() {
                 </span>
               )}
 
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4 break-words">
                 {article.title}
               </h1>
 
               {article.meta_description && (
-                <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+                <p className="text-xl text-gray-600 mb-6 leading-relaxed break-words">
                   {article.meta_description}
                 </p>
               )}
@@ -269,12 +269,23 @@ function BlogPost() {
 
               {/* CONTENIDO PARSEADO CON MARKDOWN */}
               <div
-                className="prose prose-lg max-w-none"
+                className="
+                  prose prose-lg max-w-none
+                  break-words 
+                  [&_*]:break-words 
+                  [&_*]:max-w-full
+                  [&_a]:break-all
+                  [&_pre]:overflow-x-auto
+                  [&_code]:whitespace-pre-wrap
+                  [&_img]:max-w-full
+                  [&_img]:h-auto
+                "
+                style={{
+                  wordBreak: "break-word",
+                  overflowWrap: "anywhere",
+                }}
                 dangerouslySetInnerHTML={{
-                  __html:
-                    '<p class="mb-4 leading-relaxed text-gray-700">' +
-                    parseMarkdown(article.content) +
-                    "</p>",
+                  __html: parseMarkdown(article.content),
                 }}
               />
 
