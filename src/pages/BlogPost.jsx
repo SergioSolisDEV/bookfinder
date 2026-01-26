@@ -15,6 +15,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ArticleCard from "../components/ArticleCard";
 import { useSEO } from "../hooks/useSeo";
+import AdSenseBanner from "../components/AdSenseBanner";
 import {
   getArticleBySlug,
   getRelatedArticles,
@@ -202,7 +203,6 @@ function BlogPost() {
             <ArrowLeft className="w-5 h-5" />
             Volver al blog
           </Link>
-
           <article className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {article.featured_image && (
               <div className="h-96 overflow-hidden">
@@ -308,11 +308,6 @@ function BlogPost() {
               )}
             </div>
           </article>
-
-          <div className="bg-gray-200 border-2 border-dashed border-gray-400 rounded-lg p-8 text-center my-12">
-            <p className="text-gray-600">AdSense Banner</p>
-          </div>
-
           {relatedArticles.length > 0 && (
             <div className="mt-12">
               <div className="flex items-center gap-3 mb-6">
@@ -331,6 +326,15 @@ function BlogPost() {
               </div>
             </div>
           )}
+          {/* AdSense */}
+          <div className="my-12">
+            <AdSenseBanner
+              slot="5766437073" // Usa tu slot ID real
+              format="horizontal"
+              responsive={true}
+              style={{ minHeight: "90px" }}
+            />
+          </div>
         </main>
 
         <Footer />

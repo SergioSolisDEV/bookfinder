@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import ArticleCard from "../components/ArticleCard";
 import { useSEO } from "../hooks/useSeo";
 import { getPublishedArticles, searchArticles } from "../lib/blog";
+import AdSenseBanner from "../components/AdSenseBanner";
 
 function Blog() {
   const [articles, setArticles] = useState([]);
@@ -14,7 +15,6 @@ function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewsletter, setShowNewsletter] = useState(false);
 
-  // SEO
   useSEO({
     title: "Blog - BookFinder | Artículos sobre libros y lectura",
     description:
@@ -48,7 +48,6 @@ function Blog() {
     }
   };
 
-  // Obtener categorías únicas
   const categories = [
     ...new Set(articles.map((a) => a.category).filter(Boolean)),
   ];
@@ -82,7 +81,6 @@ function Blog() {
 
         {/* Búsqueda y filtros */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          {/* Barra de búsqueda */}
           <div className="relative mb-6">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -94,7 +92,6 @@ function Blog() {
             />
           </div>
 
-          {/* Filtros por categoría */}
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <button
@@ -140,7 +137,7 @@ function Blog() {
           </div>
         )}
 
-        {/* Grid de artículos */}
+        {/* Grid de artículos CON AdSense */}
         {!loading && filteredArticles.length > 0 && (
           <>
             <div className="mb-4">
@@ -149,19 +146,23 @@ function Blog() {
                 {filteredArticles.length !== 1 ? "s" : ""}
               </p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {filteredArticles.map((article) => (
                 <ArticleCard key={article.id} article={article} />
               ))}
             </div>
-          </>
-        )}
 
-        {/* AdSense placeholder */}
-        {filteredArticles.length > 0 && (
-          <div className="bg-gray-200 border-2 border-dashed border-gray-400 rounded-lg p-8 text-center mt-12">
-            <p className="text-gray-600">AdSense Banner</p>
-          </div>
+            {/* AdSense Banner - DENTRO del condicional */}
+            <div className="my-12">
+              <AdSenseBanner
+                slot="5766437073"
+                format="horizontal"
+                responsive={true}
+                style={{ minHeight: "90px" }}
+              />
+            </div>
+          </>
         )}
       </main>
 
