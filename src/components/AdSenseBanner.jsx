@@ -36,7 +36,7 @@ const AdSenseBanner = ({
       <ins
         className="adsbygoogle"
         style={{ display: "block", ...style }}
-        data-ad-client="ca-pub-9119985572931576" // ACTUALIZADO: tu ID real
+        data-ad-client="ca-pub-9119985572931576"
         data-ad-slot={slot}
         data-ad-format={format}
         data-full-width-responsive={responsive.toString()}
